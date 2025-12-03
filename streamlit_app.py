@@ -7,10 +7,32 @@ from io import BytesIO
 # ---------------------------------------
 # ASYNC URL CHECK FUNCTION
 # ---------------------------------------
-async def fetch_status(session, url, timeout=8):
+async def fetch_status(session, url, timeout=10):
     try:
-        async with session.head(url, timeout=timeout, allow_redirects=True) as response:
-            return url, response.status < 400
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept": "*/*"
+        }
+
+        # Add protocol if missing
+        if not url.startswith("http"):
+            url = "http://" + url
+
+        async with session.get(
+            url,
+            timeout=timeout,
+            allow_redirects=True,
+            ssl=False,
+            headers=headers,
+            raise_for_status=False
+        ) as response:
+
+            # Allowed "working" statuses (404 removed)
+            if response.status in [200, 301, 302, 403, 405]:
+                return url, True
+
+            return url, False
+
     except:
         return url, False
 
@@ -39,7 +61,7 @@ async def check_urls_async(url_list):
 # ---------------------------------------
 # STREAMLIT UI
 # ---------------------------------------
-st.title("Resource URL Checker - BHU Libray ")
+st.title("Resource URL Checker - BHU Library")
 st.write("Upload a CSV or Excel file with a column named **url**.")
 
 
